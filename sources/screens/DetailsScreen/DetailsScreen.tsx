@@ -1,56 +1,61 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  ActivityIndicator,
-  ScrollView,
-  SafeAreaView,
-} from "react-native";
-import { RouteProp, useRoute } from "@react-navigation/native"; // Import types and hooks
-import { RootStackParamList } from "../../types/pokemon"; // Import the navigation types
+import React, { Component } from "react";
+import { View, Text, Image, ActivityIndicator } from "react-native";
+import { RouteProp } from "@react-navigation/native";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../types/type";
 import { getPokemonDetails } from "../../services/api";
-import { styles } from "./Styles";
+import {styles} from './Styles'
 
-type DetailsScreenRouteProp = RouteProp<RootStackParamList, "Details">;
+export interface Props extends NativeStackScreenProps<RootStackParamList, "Details"> {}
+export interface State {
+  pokemon: any | null;
+  loading: boolean;
+}
+class DetailsScreen extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      pokemon: null,
+      loading: true,
+    };
+  }
 
-const DetailsScreen = () => {
-  const route = useRoute<DetailsScreenRouteProp>();
-  const { name, id } = route.params;
-  const [pokemon, setPokemon] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  async componentDidMount() {
+    const { id } = this.props.route.params;
+    await this.fetchPokemonDetails(id);
+  }
 
-  useEffect(() => {
-    fetchPokemonDetails();
-  }, []);
-
-  const fetchPokemonDetails = async () => {
+  fetchPokemonDetails = async (id: number) => {
     try {
       const data = await getPokemonDetails(id);
-      setPokemon(data);
+      this.setState({ pokemon: data });
     } catch (error) {
       console.error("Error fetching Pokémon details:", error);
     } finally {
-      setLoading(false);
+      this.setState({ loading: false });
     }
   };
 
-  if (loading) {
+  render() {
+    const { pokemon, loading } = this.state;
+    const { id, name } = this.props.route.params;
+
+    if (loading) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      );
+    }
+
+    const formattedId = id.toString().padStart(4, "0");
+
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#fff" />
-      </View>
-    );
-  }
-
-  const formattedId = id.toString().padStart(4, "0");
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
         <Image
           source={{ uri: pokemon?.sprites.front_default }}
           style={styles.image}
+          resizeMode="cover"
         />
         <View style={styles.nameContainer}>
           <View style={styles.numberContainer}>
@@ -62,38 +67,43 @@ const DetailsScreen = () => {
         </View>
         <View style={styles.detailContainer}>
           <View style={styles.abilitiesContainer}>
-            <Text style={styles.subTitle}>Pokemon Abilities</Text>
-            {pokemon?.abilities.map(
-              (ability: { ability: { name: string } }) => (
-                <Text style={styles.subTitleIn} key={ability.ability.name}>
-                  {ability.ability.name}
-                </Text>
-              )
-            )}
+            <Text style={styles.titleBot}>Pokemon Abilities</Text>
+            <View style={styles.botContainer}>
+              {pokemon?.abilities.map(
+                (ability: { ability: { name: string } }) => (
+                  <Text style={styles.subTitleBot} key={ability.ability.name}>
+                    {ability.ability.name}
+                  </Text>
+                )
+              )}
+            </View>
           </View>
           <View style={styles.typesContainer}>
-            <Text style={styles.subTitle}>Pokemon Types</Text>
-            {pokemon?.types.map((type: { type: { name: string } }) => (
-              <Text style={styles.subTitleIn} key={type.type.name}>
-                {type.type.name}
-              </Text>
-            ))}
+            <Text style={styles.titleBot}>Pokemon Types</Text>
+            <View style={styles.botContainer}>
+              {pokemon?.types.map((type: { type: { name: string } }) => (
+                <Text style={styles.subTitleBot} key={type.type.name}>
+                  {type.type.name}
+                </Text>
+              ))}
+            </View>
           </View>
           <View style={styles.statsContainer}>
-            <Text style={styles.subTitle}>Pokemon Stats</Text>
             {pokemon?.stats.map(
               (stat: { stat: { name: string }; base_stat: number }) => (
-                <Text
-                  style={styles.subTitleIn}
-                  key={stat.stat.name}
-                >{`${stat.stat.name} ${stat.base_stat}`}</Text>
+                <View style={styles.statColumn} key={stat.stat.name}>
+                  <Text style={styles.statName}>
+                    {stat.stat.name.toUpperCase()}
+                  </Text>
+                  <Text style={styles.statValue}>{stat.base_stat}</Text>
+                </View>
               )
             )}
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+      </View>
+    );
+  }
+}
 
 export default DetailsScreen;

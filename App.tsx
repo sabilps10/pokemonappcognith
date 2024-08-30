@@ -1,6 +1,5 @@
-// App.tsx
 import React from "react";
-import AppNavigator from "./sources/navigations/AppNavigation";
+import AppNavigator from "./sources/navigators/AppNavigation";
 
 const App = () => {
   return <AppNavigator />;
