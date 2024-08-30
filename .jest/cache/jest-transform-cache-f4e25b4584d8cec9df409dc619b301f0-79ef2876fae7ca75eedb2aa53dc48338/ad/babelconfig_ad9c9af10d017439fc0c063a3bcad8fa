@@ -1,0 +1,103 @@
+753992c4d5cea0b084aff33ff27baa34
+function cov_cse7htvqi() {
+  var path = "/Users/sabilps/Documents/Learn/ReactNativeLearn/PokemonAppCognith/babel.config.js";
+  var hash = "aff2b4e503c11a7ea5f1391c3c34ee7ad3db4fae";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "/Users/sabilps/Documents/Learn/ReactNativeLearn/PokemonAppCognith/babel.config.js",
+    statementMap: {
+      "0": {
+        start: {
+          line: 1,
+          column: 0
+        },
+        end: {
+          line: 6,
+          column: 2
+        }
+      },
+      "1": {
+        start: {
+          line: 2,
+          column: 2
+        },
+        end: {
+          line: 2,
+          column: 18
+        }
+      },
+      "2": {
+        start: {
+          line: 3,
+          column: 2
+        },
+        end: {
+          line: 5,
+          column: 4
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 1,
+            column: 17
+          },
+          end: {
+            line: 1,
+            column: 18
+          }
+        },
+        loc: {
+          start: {
+            line: 1,
+            column: 32
+          },
+          end: {
+            line: 6,
+            column: 1
+          }
+        },
+        line: 1
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    f: {
+      "0": 0
+    },
+    b: {},
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "aff2b4e503c11a7ea5f1391c3c34ee7ad3db4fae"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    cov_cse7htvqi = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_cse7htvqi();
+cov_cse7htvqi().s[0]++;
+module.exports = function (api) {
+  cov_cse7htvqi().f[0]++;
+  cov_cse7htvqi().s[1]++;
+  api.cache(true);
+  cov_cse7htvqi().s[2]++;
+  return {
+    presets: ['babel-preset-expo']
+  };
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJtb2R1bGUiLCJleHBvcnRzIiwiYXBpIiwiY292X2NzZTdodHZxaSIsImYiLCJzIiwiY2FjaGUiLCJwcmVzZXRzIl0sInNvdXJjZXMiOlsiYmFiZWwuY29uZmlnLmpzIl0sInNvdXJjZXNDb250ZW50IjpbIm1vZHVsZS5leHBvcnRzID0gZnVuY3Rpb24gKGFwaSkge1xuICBhcGkuY2FjaGUodHJ1ZSk7XG4gIHJldHVybiB7XG4gICAgcHJlc2V0czogWydiYWJlbC1wcmVzZXQtZXhwbyddLFxuICB9O1xufTtcbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQUEsTUFBTSxDQUFDQyxPQUFPLEdBQUcsVUFBVUMsR0FBRyxFQUFFO0VBQUFDLGFBQUEsR0FBQUMsQ0FBQTtFQUFBRCxhQUFBLEdBQUFFLENBQUE7RUFDOUJILEdBQUcsQ0FBQ0ksS0FBSyxDQUFDLElBQUksQ0FBQztFQUFDSCxhQUFBLEdBQUFFLENBQUE7RUFDaEIsT0FBTztJQUNMRSxPQUFPLEVBQUUsQ0FBQyxtQkFBbUI7RUFDL0IsQ0FBQztBQUNILENBQUMiLCJpZ25vcmVMaXN0IjpbXX0=
