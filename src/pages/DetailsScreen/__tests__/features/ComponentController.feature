@@ -4,11 +4,11 @@ Feature: Details Screen View
     Given I am on the Pokemon details screen
     When I successfully load Pokemon details
     Then I should see Pokemon's image
-    And I should see Pokemon's ID
-    And I should see Pokemon's name
-    And I should see Pokemon's abilities
-    And I should see Pokemon's types
-    And I should see Pokemon's stats
+    Then I should see Pokemon's ID
+    Then I should see Pokemon's name
+    Then I should see Pokemon's abilities
+    Then I should see Pokemon's types
+    Them I should see Pokemon's stats
 
   Scenario: Handle fetch error
     Given I encounter a fetch error while loading Pokemon details

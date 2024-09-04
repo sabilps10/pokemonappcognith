@@ -1,121 +1,113 @@
-import React from "react";
 import { shallow, ShallowWrapper } from "enzyme";
 import { defineFeature, loadFeature } from "jest-cucumber";
-import { View, Text, ActivityIndicator } from "react-native";
+import { Text, Image, ActivityIndicator, View } from "react-native";
 import ComponentController from "../../ComponentController";
 import { mockDetailPokemon } from "../../../../values/values";
 import { getPokemonDetails } from "../../../../services/api";
+import { RouteProp } from "@react-navigation/native";
+import { RootStackParamList } from "../../../../types/type";
 
-// Load feature file
 const feature = loadFeature("../features/ComponentController.feature");
+
+jest.mock("../../services/api");
 
 defineFeature(feature, (test) => {
   let wrapper: ShallowWrapper;
   let instance: ComponentController;
 
+  const props = {
+    navigation: {
+      navigate: jest.fn(),
+    } as any,
+    route: {
+      key: "details", // Include the 'key' property
+      name: "Details", // Include the 'name' property
+      params: {
+        id: 1, // Assuming the ID is passed as a route parameter
+      },
+    } as RouteProp<RootStackParamList, "Details">,
+  };
+
   beforeEach(() => {
     jest.resetModules();
 
-    const consoleErrorSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    // Mock the API call
-    jest
-      .spyOn(getPokemonDetails, "default")
-      .mockImplementation(() => Promise.resolve(mockDetailPokemon));
-
-    // Create a mock route object
-    const mockRoute = {
-      key: "mockKey",
-      name: "Details",
-      params: {
-        id: 1,
-      },
-    };
-
-    // Create a mock navigation object
-    const mockNavigation = {
-      navigate: jest.fn(),
-      goBack: jest.fn(),
-      // Add other navigation methods if necessary
-    };
-
-    wrapper = shallow(
-      <ComponentController
-        route={mockRoute as any} // TypeScript type assertion
-        navigation={mockNavigation as any} // TypeScript type assertion
-      />
-    );
+    wrapper = shallow(<ComponentController {...props} />);
     instance = wrapper.instance() as ComponentController;
 
-    jest.spyOn(instance, "componentDidMount");
+    jest.spyOn(instance, "fetchPokemonDetails");
+  });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-      consoleErrorSpy.mockRestore();
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   test("Render Pokemon Details", ({ given, when, then }) => {
-    given("I am on the Pokémon details page", () => {});
+    given("I am on the Pokemon details screen", () => {});
 
-    when("I successfully load Pokémon details", async () => {
-      instance.componentDidMount();
-      await new Promise(setImmediate); // Ensure state updates and re-rendering
+    when("I successfully load Pokemon details", async () => {
+      (getPokemonDetails as jest.Mock).mockResolvedValue(mockDetailPokemon);
+      await instance.componentDidMount();
       wrapper.update();
     });
 
-    then("I should see the Pokémon details", () => {
-      // Assuming `pokemon` is set correctly in state and UI renders it
-      expect(wrapper.find(Text).at(0).text()).toContain(
-        `#${mockDetailPokemon.id.toString().padStart(4, "0")}`
-      );
-      expect(wrapper.find(Text).at(1).text()).toBe(
-        mockDetailPokemon.name.charAt(0).toUpperCase() +
-          mockDetailPokemon.name.slice(1)
-      );
-
-      const abilities = mockDetailPokemon.abilities.map(
-        (ability: { ability: { name: string } }) => ability.ability.name
-      );
-      const abilityTexts = wrapper.findWhere(
-        (node) => node.type() === Text && abilities.includes(node.text())
-      );
-      expect(abilityTexts.length).toBe(abilities.length);
-
-      const types = mockDetailPokemon.types.map(
-        (type: { type: { name: string } }) => type.type.name
-      );
-      const typeTexts = wrapper.findWhere(
-        (node) => node.type() === Text && types.includes(node.text())
-      );
-      expect(typeTexts.length).toBe(types.length);
+    then("I should see Pokemon's image", () => {
+      const image = wrapper.find(Image);
+      const imageUri = mockDetailPokemon.sprites?.front_default; // Handle undefined
+      const imageSource = image.props().source as { uri: string }; // Type assertion
+      expect(imageSource.uri).toBe(imageUri);
     });
 
-    then("I should see the loading indicator initially", () => {
-      expect(wrapper.find(ActivityIndicator).exists()).toBe(true);
+    then("I should see Pokemon's ID", () => {
+      const text = wrapper.find(Text).at(0);
+      expect(text.contains(`ID: ${mockDetailPokemon.id}`)).toBe(true);
+    });
+
+    then("I should see Pokemon's name", () => {
+      const text = wrapper.find(Text).at(1);
+      expect(text.contains(mockDetailPokemon.name)).toBe(true);
+    });
+
+    then("I should see Pokemon's abilities", () => {
+      const abilitiesText = wrapper.find(Text).at(2);
+      const abilities = mockDetailPokemon.abilities
+        .map((ability: any) => ability.ability.name)
+        .join(", ");
+      expect(abilitiesText.contains(`Abilities: ${abilities}`)).toBe(true);
+    });
+
+    then("I should see Pokemon's types", () => {
+      const typesText = wrapper.find(Text).at(3);
+      const types = mockDetailPokemon.types
+        .map((type: any) => type.type.name)
+        .join(", ");
+      expect(typesText.contains(`Types: ${types}`)).toBe(true);
+    });
+
+    then("I should see Pokemon's stats", () => {
+      const statsText = wrapper.find(Text).at(4);
+      const stats = mockDetailPokemon.stats
+        .map((stat: any) => `${stat.stat.name}: ${stat.base_stat}`)
+        .join(", ");
+      expect(statsText.contains(`Stats: ${stats}`)).toBe(true);
     });
   });
 
-  test("Handle fetch error", async ({ given, when, then }) => {
-    given("I get a fetch error", () => {
-      jest
-        .spyOn(getPokemonDetails, "default")
-        .mockImplementation(() => Promise.reject(new Error("Fetch error")));
+  test("Handle fetch error", ({ given, when, then }) => {
+    given("I encounter a fetch error while loading Pokemon details", () => {
+      (getPokemonDetails as jest.Mock).mockRejectedValue(
+        new Error("Fetch error")
+      );
     });
 
     when("I mount the component", async () => {
       await instance.componentDidMount();
     });
 
-    then("I should log errors", () => {
+    then("I should see an error message or indication of an error", () => {
       const consoleErrorSpy = jest
         .spyOn(console, "error")
         .mockImplementation(() => {});
-
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
-
       consoleErrorSpy.mockRestore();
     });
   });
