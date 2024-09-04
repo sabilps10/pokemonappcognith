@@ -1,11 +1,11 @@
-import { NavigatorScreenParams } from "@react-navigation/native";
+import { RouteProp } from "@react-navigation/native";
 
 export type RootStackParamList = {
   Home: undefined;
   Details: { name: string; id: number }; // Expecting a 'name' parameter
 };
 
-export type AppNavigationProps = NavigatorScreenParams<RootStackParamList>;
+export type AppNavigationProps = RouteProp<RootStackParamList>;
 
 export interface Pokemon {
   name: string;

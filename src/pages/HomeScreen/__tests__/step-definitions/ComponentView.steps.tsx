@@ -1,32 +1,33 @@
-import React from "react";
-import loadash from "lodash";
-import HomePage from "../../ComponentView";
 import { shallow, ShallowWrapper } from "enzyme";
-import { defineFeature, loadFeature } from "jest-cucumber";
-import { FlatList, FlatListProps, Text } from "react-native";
-import { mockPokemonCard, mockPokemonList } from "../../../../values/values";
+import { FlatList, ActivityIndicator, TextInput } from "react-native";
+import ControllerView from "../../ComponentView";
+import PokemonCard from "../../../../components/PokemonCard/PokemonCardView";
+import { mockPokemonList, mockPokemonCard } from "../../../../values/values";
 
-const feature = loadFeature("../features/ComponentView.feature");
-
-defineFeature(feature, (test) => {
+describe("ControllerView", () => {
   let wrapper: ShallowWrapper;
-  let instance: HomePage;
+  let instance: ControllerView;
+  let consoleErrorSpy: jest.SpyInstance;
 
-  let props = {
+  const props = {
     navigation: {
       navigate: jest.fn(),
     } as any,
+    route: {
+      params: {
+        id: 1,
+        name: "Bulbasaur",
+      },
+    } as any, // Mock route params as needed
   };
 
   beforeEach(() => {
     jest.resetModules();
 
-    const consoleErrorSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     global.fetch = jest.fn((url) => {
-      if (url.includes(mockPokemonList.next)) {
+      if (url.includes("next")) {
         return Promise.resolve({
           json: () => Promise.resolve(mockPokemonList),
         });
@@ -36,99 +37,66 @@ defineFeature(feature, (test) => {
       });
     }) as jest.Mock;
 
-    wrapper = shallow(<HomePage navigation={props.navigation} />);
-    instance = wrapper.instance() as HomePage;
+    wrapper = shallow(<ControllerView {...props} />);
+    instance = wrapper.instance() as ControllerView;
 
-    loadash.debounce = jest.fn((func) => func) as jest.Mock;
-
-    jest.spyOn(instance, "fetchData");
-    jest.spyOn(instance, "navigateDetails");
-
-    afterEach(() => {
-      jest.clearAllMocks();
-      consoleErrorSpy.mockRestore();
-    });
+    jest.spyOn(instance, "loadMore");
+    jest.spyOn(instance, "handleSearch");
   });
 
-  test("Render Pokemon List", ({ given, when, then, and }) => {
-    given("I am on the Pokemon list", () => {});
+  afterEach(() => {
+    jest.clearAllMocks();
+    consoleErrorSpy.mockRestore();
+  });
 
-    when("I successfully load Pokemon list", async () => {
-      instance.componentDidMount();
-      await new Promise(setImmediate);
-      wrapper.update();
-    });
+  test("Render Pokemon List", () => {
+    instance.setState({ pokemons: mockPokemonList.results, loading: false });
+    wrapper.update();
 
-    then("I should see a list of Pokemon", () => {
-      const updatedFlatListProps = wrapper
+    expect(wrapper.find(FlatList).exists()).toBe(true);
+    expect(wrapper.find(ActivityIndicator).exists()).toBe(false);
+    expect(wrapper.find(FlatList).props().data).toEqual(
+      mockPokemonList.results
+    );
+
+    // Check if each PokemonCard is rendered
+    expect(
+      wrapper
         .find(FlatList)
-        .props() as FlatListProps<{
-        name: string;
-        url: string;
-      }>;
+        .children()
+        .every((child) => child.type() === PokemonCard)
+    ).toBe(true);
 
-      expect(updatedFlatListProps.data?.length).toEqual(1);
-    });
-
-    then("I should see flatlist item rendered", () => {
-      const props = { item: mockPokemonCard, index: 0 };
-
-      const flatlist = wrapper.find(FlatList).props();
-
-      const renderItem: any = flatlist.renderItem;
-      const itemWrapper = shallow(renderItem({ ...props }));
-
-      const key = flatlist.keyExtractor?.(mockPokemonList.results[0], 0);
-      expect(key).toBe("0");
-
-      const nameText = itemWrapper.findWhere(
-        (node) => node.type() === Text && node.prop("testID") === "name"
-      );
-      expect(nameText.text()).toBe(mockPokemonCard.name);
-    });
-
-    then("I reach the end of the list", () => {
-      const flatlist = wrapper.find(FlatList).props();
-
-      flatlist.onEndReached?.({ distanceFromEnd: 0 });
-
-      expect(instance.fetchData).toBeCalled();
-    });
+    // Simulate scrolling to the end of the list
+    const flatlist = wrapper.find(FlatList).props();
+    flatlist.onEndReached?.({ distanceFromEnd: 0 });
+    expect(instance.loadMore).toBeCalled();
   });
 
-  // For search functionality
-  test("Search works correctly", ({ given, when, then }) => {
-    given("I am on the Pokemon details page", () => {});
+  test("Search works correctly", () => {
+    // Simulate typing a search query
+    const search = "Bulbasaur";
+    instance.setState({ search });
+    instance.handleSearch(search);
+    wrapper.update(); // Ensure the component re-renders
 
-    when("I perform a search", () => {
-      instance.onSearch(mockPokemonCard.name);
-    });
-
-    then("I should navigate to the details page", () => {
-      expect(instance.navigateDetails).toBeCalled();
-    });
+    expect(wrapper.find(FlatList).props().data).toEqual(
+      search.length <= 1
+        ? mockPokemonList.results
+        : mockPokemonList.results.filter((pokemon) =>
+            pokemon.name.toLowerCase().includes(search.toLowerCase())
+          )
+    );
   });
 
-  // For handle error
-  test("Handle fetch error", async ({ given, when, then }) => {
-    given("I get a fetch error", () => {
-      global.fetch = jest.fn(() =>
-        Promise.reject(new Error("Fetch error"))
-      ) as jest.Mock;
-    });
+  test("Handle fetch error", async () => {
+    global.fetch = jest.fn(() =>
+      Promise.reject(new Error("Fetch error"))
+    ) as jest.Mock;
 
-    when("I mounted the component", async () => {
-      await instance.componentDidMount();
-    });
+    await instance.componentDidMount();
 
-    then("I should log errors", () => {
-      const consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
-
-      consoleErrorSpy.mockRestore();
-    });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+    expect(wrapper.find(ActivityIndicator).exists()).toBe(true); // Should see a loading indicator while fetching
   });
 });

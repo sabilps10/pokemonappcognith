@@ -10,7 +10,7 @@ export interface State {
   pokemon: any | null;
   loading: boolean;
 }
-class DetailsScreenController extends Component<Props, State> {
+class ComponentController extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -36,4 +36,4 @@ class DetailsScreenController extends Component<Props, State> {
   };
 }
 
-export default DetailsScreenController;
+export default ComponentController;

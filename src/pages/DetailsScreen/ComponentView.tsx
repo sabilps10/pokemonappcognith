@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import DetailsScreenController from "./ComponentController";
 
-class DetailsScreenView extends DetailsScreenController {
+class ComponentView extends DetailsScreenController {
   
   render() {
     const { pokemon, loading } = this.state;
@@ -80,7 +80,7 @@ class DetailsScreenView extends DetailsScreenController {
   }
 }
 
-export default DetailsScreenView;
+export default ComponentView;
 
 const windowWidth = Dimensions.get("window").width;
 
