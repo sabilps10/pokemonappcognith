@@ -5,12 +5,14 @@ import ComponentView from "../../ComponentView";
 import { mockDetailPokemon } from "../../../../values/values";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../../../types/type";
+import { act } from "react-dom/test-utils";
 
 const feature = loadFeature("../features/ComponentView.feature");
 
 defineFeature(feature, (test) => {
   let wrapper: ShallowWrapper;
-  let instance: ComponentView;
+  jest.mock("node:assert");
+  jest.mock("node:net");
 
   let props = {
     navigation: {
@@ -39,12 +41,7 @@ defineFeature(feature, (test) => {
       })
     ) as jest.Mock;
 
-    wrapper = shallow(
-      <ComponentView navigation={props.navigation} route={props.route} />
-    );
-    instance = wrapper.instance() as ComponentView;
-
-    jest.spyOn(instance, "componentDidMount");
+    wrapper = shallow(<ComponentView navigation={props.navigation} route={props.route} />);
 
     afterEach(() => {
       jest.clearAllMocks();
@@ -56,14 +53,16 @@ defineFeature(feature, (test) => {
     given("I am on the Pokemon details screen", () => {});
 
     when("I successfully load Pokemon details", async () => {
-      await instance.componentDidMount();
-      wrapper.update();
+      // Use `act` to handle async updates
+      await act(async () => {
+        await new Promise((resolve) => setImmediate(resolve)); // Simulate async fetch
+      });
     });
 
     then("I should see Pokemon's image", () => {
       const image = wrapper.find(Image);
-      const imageUri = mockDetailPokemon.sprites?.front_default; // Handle undefined
-      const imageSource = image.props().source as { uri: string }; // Type assertion
+      const imageUri = mockDetailPokemon.sprites?.front_default;
+      const imageSource = image.props().source as { uri: string };
       expect(imageSource.uri).toBe(imageUri);
     });
 
@@ -111,7 +110,9 @@ defineFeature(feature, (test) => {
     });
 
     when("I mount the component", async () => {
-      await instance.componentDidMount();
+      await act(async () => {
+        await new Promise((resolve) => setImmediate(resolve)); // Simulate async error
+      });
     });
 
     then("I should see an error message or indication of an error", () => {
@@ -123,3 +124,4 @@ defineFeature(feature, (test) => {
     });
   });
 });
+

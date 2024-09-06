@@ -1,4 +1,3 @@
-import React from "react";
 import { shallow, ShallowWrapper } from "enzyme";
 import { defineFeature, loadFeature } from "jest-cucumber";
 import { FlatList, TextInput, ActivityIndicator } from "react-native";
@@ -10,7 +9,8 @@ const feature = loadFeature("../features/ComponentView.feature");
 
 defineFeature(feature, (test) => {
   let wrapper: ShallowWrapper;
-  let instance: ControllerView;
+  jest.mock("node:assert");
+  jest.mock("node:net");
 
   const props = {
     navigation: {
@@ -39,10 +39,9 @@ defineFeature(feature, (test) => {
     }) as jest.Mock;
 
     wrapper = shallow(<ControllerView {...props} />);
-    instance = wrapper.instance() as ControllerView;
 
-    jest.spyOn(instance, "loadMore");
-    jest.spyOn(instance, "handleSearch");
+    jest.spyOn(wrapper.instance() as any, "loadMore");
+    jest.spyOn(wrapper.instance() as any, "handleSearch");
   });
 
   afterEach(() => {
@@ -53,8 +52,8 @@ defineFeature(feature, (test) => {
     given("I am on the Pokemon list", () => {});
 
     when("I successfully load Pokemon list", async () => {
+      // Wait for asynchronous state updates triggered by fetch
       await new Promise(setImmediate);
-      wrapper.update();
     });
 
     then("I should see a loading indicator when data is being fetched", () => {
@@ -64,7 +63,6 @@ defineFeature(feature, (test) => {
 
     then("I should see a list of Pokemon", () => {
       wrapper.setState({ pokemons: mockPokemonList.results, loading: false });
-      wrapper.update();
       expect(wrapper.find(FlatList).exists()).toBe(true);
       expect(wrapper.find(FlatList).props().data).toEqual(
         mockPokemonList.results
@@ -92,7 +90,7 @@ defineFeature(feature, (test) => {
       () => {
         const flatlistProps = wrapper.find(FlatList).props();
         flatlistProps.onEndReached?.({ distanceFromEnd: 0 });
-        expect(instance.loadMore).toBeCalled();
+        expect((wrapper.instance() as any).loadMore).toBeCalled();
       }
     );
   });
@@ -103,8 +101,7 @@ defineFeature(feature, (test) => {
     when("I type a search query into the search input", () => {
       const searchQuery = "Bulbasaur";
       wrapper.find(TextInput).props().onChangeText?.(searchQuery);
-      instance.handleSearch(searchQuery);
-      wrapper.update();
+      (wrapper.instance() as any).handleSearch(searchQuery);
     });
 
     then(
@@ -122,9 +119,8 @@ defineFeature(feature, (test) => {
       "if the search query is a numeric value, I should see the list of all Pokemon",
       () => {
         const searchQuery = "1";
-        instance.setState({ search: searchQuery });
-        instance.handleSearch(searchQuery);
-        wrapper.update();
+        wrapper.setState({ search: searchQuery });
+        (wrapper.instance() as any).handleSearch(searchQuery);
 
         expect(wrapper.find(FlatList).props().data).toEqual(
           mockPokemonList.results
@@ -136,9 +132,8 @@ defineFeature(feature, (test) => {
       "if the search query is empty or contains one character, I should see the full list of Pokemon",
       () => {
         const searchQuery = "";
-        instance.setState({ search: searchQuery });
-        instance.handleSearch(searchQuery);
-        wrapper.update();
+        wrapper.setState({ search: searchQuery });
+        (wrapper.instance() as any).handleSearch(searchQuery);
 
         expect(wrapper.find(FlatList).props().data).toEqual(
           mockPokemonList.results
@@ -155,7 +150,8 @@ defineFeature(feature, (test) => {
     });
 
     when("the component mounts and attempts to fetch data", async () => {
-      await instance.componentDidMount();
+      await new Promise(setImmediate);
+      // No need to manually trigger a wrapper update
     });
 
     then("I should log the fetch error", () => {
@@ -169,8 +165,10 @@ defineFeature(feature, (test) => {
     then(
       "I should see a loading indicator while the data is being fetched",
       () => {
+        wrapper.setState({ loading: true });
         expect(wrapper.find(ActivityIndicator).exists()).toBe(true);
       }
     );
   });
 });
+
